@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sport-Tech Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;600&display=swap');
+  :root{--bg:#070a0f;--panel:#0d1117;--border:#1a2233;--accent:#00e5ff;--red:#ff3b3b;--green:#00ff88;--yellow:#ffd600;--dim:#3a4a5a;--text:#c8d8e8;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  .wrapper{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:24px 20px;}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:var(--accent);text-shadow:0 0 20px rgba(0,229,255,0.4);}
+  .logo span{color:var(--text);}
+  .header-right{display:flex;align-items:center;gap:16px;}
+  .status-bar{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);}
+  .dot.live{background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+  .btn-report{background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:8px 16px;border-radius:4px;cursor:pointer;transition:all 0.2s;}
+  .btn-report:hover{background:var(--accent);color:var(--bg);}
+  .phase-bar{display:flex;gap:8px;margin-bottom:16px;}
+  .phase-step{flex:1;padding:10px 8px;border-radius:4px;border:1px solid var(--border);text-align:center;transition:all 0.4s;}
+  .phase-step .phase-name{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--dim);}
+  .phase-step .phase-desc{font-size:9px;letter-spacing:1px;color:var(--dim);margin-top:2px;}
+  .phase-step.active-warmup{border-color:#00ff88;background:rgba(0,255,136,0.08);}
+  .phase-step.active-warmup .phase-name{color:#00ff88;text-shadow:0 0 10px rgba(0,255,136,0.5);}
+  .phase-step.active-active{border-color:#00e5ff;background:rgba(0,229,255,0.08);}
+  .phase-step.active-active .phase-name{color:#00e5ff;text-shadow:0 0 10px rgba(0,229,255,0.5);}
+  .phase-step.active-tired{border-color:#ffd600;background:rgba(255,214,0,0.08);}
+  .phase-step.active-tired .phase-name{color:#ffd600;text-shadow:0 0 10px rgba(255,214,0,0.5);}
+  .phase-step.active-exhausted{border-color:#ff3b3b;background:rgba(255,59,59,0.08);animation:phase-flash 1s infinite;}
+  .phase-step.active-exhausted .phase-name{color:#ff3b3b;text-shadow:0 0 10px rgba(255,59,59,0.5);}
+  @keyframes phase-flash{0%,100%{opacity:1;}50%{opacity:0.6;}}
+  #fatigue-banner{display:none;background:rgba(255,59,59,0.1);border:1px solid var(--red);border-left:4px solid var(--red);padding:14px 20px;margin-bottom:16px;border-radius:4px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--red);text-shadow:0 0 12px rgba(255,59,59,0.5);animation:flash 0.8s infinite;}
+  @keyframes flash{0%,100%{opacity:1;}50%{opacity:0.6;}}
+  .metrics-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:16px 18px;position:relative;overflow:hidden;}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);opacity:0.4;}
+  .card.hr::before{background:var(--red);}
+  .card.spo2::before{background:#a78bfa;}
+  .card.rr::before{background:#34d399;}
+  .card-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:8px;}
+  .card-value{font-family:'Bebas Neue',sans-serif;font-size:44px;line-height:1;color:#fff;letter-spacing:2px;}
+  .card-unit{font-size:12px;color:var(--dim);margin-top:4px;letter-spacing:1px;}
+  .hr-value{color:var(--green);}
+  .hr-value.warn{color:var(--yellow);}
+  .hr-value.danger{color:var(--red);text-shadow:0 0 10px rgba(255,59,59,0.5);}
+  .spo2-value{color:#a78bfa;}
+  .spo2-value.warn{color:var(--yellow);}
+  .spo2-value.danger{color:var(--red);}
+  .rr-value{color:#34d399;}
+  .charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;}
+  .chart-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:16px 18px;}
+  .chart-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:12px;}
+  canvas{display:block;width:100%!important;}
+  .footer-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .stat-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;}
+  .stat-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);}
+  .stat-value{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent);letter-spacing:2px;}
+  .ts-row{text-align:right;font-size:10px;color:var(--dim);letter-spacing:2px;margin-top:12px;}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <div class="logo">SPORT<span>·</span>TECH <span style="font-size:14px;letter-spacing:2px;color:var(--dim)">/ PERFORMANCE MONITOR</span></div>
+    <div class="header-right">
+      <button class="btn-report" onclick="exportReport()">⬇ Export Report</button>
+      <div class="status-bar"><div class="dot" id="conn-dot"></div><span id="conn-label">CONNECTING...</span></div>
+    </div>
+  </header>
+
+  <div class="phase-bar">
+    <div class="phase-step" id="phase-warmup"><div class="phase-name">WARM UP</div><div class="phase-desc">HR &lt; 120</div></div>
+    <div class="phase-step" id="phase-active"><div class="phase-name">ACTIVE</div><div class="phase-desc">HR 120–150</div></div>
+    <div class="phase-step" id="phase-tired"><div class="phase-name">TIRED</div><div class="phase-desc">HR 150–170</div></div>
+    <div class="phase-step" id="phase-exhausted"><div class="phase-name">EXHAUSTED</div><div class="phase-desc">HR &gt; 170</div></div>
+  </div>
+
+  <div id="fatigue-banner">⚠ FATIGUE DETECTED — ATHLETE NEEDS REST</div>
+
+  <div class="metrics-row">
+    <div class="card hr"><div class="card-label">Heart Rate</div><div class="card-value hr-value" id="hr-val">---</div><div class="card-unit">BPM</div></div>
+    <div class="card spo2"><div class="card-label">SpO₂</div><div class="card-value spo2-value" id="spo2-val">---</div><div class="card-unit">% OXYGEN</div></div>
+    <div class="card rr"><div class="card-label">Resp Rate</div><div class="card-value rr-value" id="rr-val">---</div><div class="card-unit">BR / MIN</div></div>
+    <div class="card"><div class="card-label">Fatigue Score</div><div class="card-value" id="fatigue-score" style="color:var(--green)">---</div><div class="card-unit">/ 100</div></div>
+    <div class="card"><div class="card-label">Accel Magnitude</div><div class="card-value" id="mag-val" style="color:var(--accent)">---</div><div class="card-unit">G</div></div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card"><div class="chart-title">Heart Rate — Live</div><canvas id="hr-chart" height="100"></canvas></div>
+    <div class="chart-card"><div class="chart-title">SpO₂ — Live</div><canvas id="spo2-chart" height="100"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Fatigue Score — Live</div><canvas id="fatigue-chart" height="100"></canvas></div>
+  </div>
+
+  <div class="footer-row">
+    <div class="stat-card">
+      <div><div class="stat-label">Peak HR</div><div class="stat-value" id="peak-hr">---</div></div>
+      <div><div class="stat-label">Avg HR</div><div class="stat-value" id="avg-hr">---</div></div>
+      <div><div class="stat-label">Avg SpO₂</div><div class="stat-value" id="avg-spo2">---</div></div>
+    </div>
+    <div class="stat-card">
+      <div><div class="stat-label">Fatigue Events</div><div class="stat-value" id="fatigue-count" style="color:var(--red)">0</div></div>
+      <div><div class="stat-label">Session Time</div><div class="stat-value" id="session-time">0:00</div></div>
+    </div>
+  </div>
+  <div class="ts-row">TIMESTAMP &nbsp;<span id="ts-val">—</span></div>
+</div>
+<script>
+function makeChart(id,color,min,max){
+  const canvas=document.getElementById(id),ctx=canvas.getContext('2d');
+  const W=400,H=100; canvas.width=W; canvas.height=H;
+  const pts=new Array(80).fill((min+max)/2);
+  return{push(v){pts.push(v);if(pts.length>80)pts.shift();this.draw();},draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='rgba(26,34,51,0.8)';ctx.lineWidth=1;
+    for(let i=0;i<=4;i++){const y=(i/4)*H;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    const grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,color+'33');grad.addColorStop(1,color+'00');
+    const sx=W/(pts.length-1);
+    ctx.beginPath();pts.forEach((v,i)=>{const x=i*sx,y=H-((v-min)/(max-min))*H*0.85-H*0.07;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+    ctx.beginPath();pts.forEach((v,i)=>{const x=i*sx,y=H-((v-min)/(max-min))*H*0.85-H*0.07;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.strokeStyle=color;ctx.lineWidth=1.8;ctx.shadowColor=color;ctx.shadowBlur=6;ctx.stroke();ctx.shadowBlur=0;
+  }};
+}
+const hrChart     = makeChart('hr-chart',      '#ff3b3b', 40,  220);
+const spo2Chart   = makeChart('spo2-chart',    '#a78bfa', 88,  100);
+const fatigueChart= makeChart('fatigue-chart', '#ffd600', 0,   100);
+
+function updatePhase(hr){
+  ['warmup','active','tired','exhausted'].forEach(p=>document.getElementById('phase-'+p).className='phase-step');
+  const p=hr<120?'warmup':hr<150?'active':hr<170?'tired':'exhausted';
+  document.getElementById('phase-'+p).className='phase-step active-'+p;
+}
+
+let peakHR=0,hrSum=0,spo2Sum=0,hrCount=0,fatigueEvents=0,sessionStart=Date.now();
+const sessionLog=[];
+
+setInterval(()=>{
+  const s=Math.floor((Date.now()-sessionStart)/1000);
+  document.getElementById('session-time').textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+},1000);
+
+function update(d){
+  const hr=d.heart_rate,ax=d.accel_x,ay=d.accel_y,az=d.accel_z;
+  const mag=Math.sqrt(ax*ax+ay*ay+az*az);
+  const score=d.fatigue_score??0;
+  const spo2=d.spo2??98;
+  const rr=d.resp_rate??16;
+
+  const hrEl=document.getElementById('hr-val');
+  hrEl.textContent=hr; hrEl.className='card-value hr-value'+(hr>160?' danger':hr>140?' warn':'');
+  const spo2El=document.getElementById('spo2-val');
+  spo2El.textContent=spo2.toFixed(1);
+  spo2El.className='card-value spo2-value'+(spo2<94?' danger':spo2<96?' warn':'');
+  document.getElementById('rr-val').textContent=Math.round(rr);
+  document.getElementById('mag-val').textContent=mag.toFixed(2);
+  const fs=document.getElementById('fatigue-score');
+  fs.textContent=score; fs.style.color=score>60?'var(--red)':score>30?'var(--yellow)':'var(--green)';
+  document.getElementById('fatigue-banner').style.display=d.fatigue_warning?'block':'none';
+
+  hrChart.push(hr); spo2Chart.push(spo2); fatigueChart.push(score);
+  updatePhase(hr);
+
+  peakHR=Math.max(peakHR,hr); hrSum+=hr; spo2Sum+=spo2; hrCount++;
+  if(d.fatigue_warning) fatigueEvents++;
+  document.getElementById('peak-hr').textContent=peakHR;
+  document.getElementById('avg-hr').textContent=Math.round(hrSum/hrCount);
+  document.getElementById('avg-spo2').textContent=(spo2Sum/hrCount).toFixed(1)+'%';
+  document.getElementById('fatigue-count').textContent=fatigueEvents;
+  document.getElementById('ts-val').textContent=d.timestamp_us?d.timestamp_us.toLocaleString():'—';
+
+  if(hrCount%10===0){
+    const elapsed=Math.floor((Date.now()-sessionStart)/1000);
+    sessionLog.push({t:elapsed,hr,spo2,rr:Math.round(rr),mag:+mag.toFixed(2),score,fatigue:d.fatigue_warning});
+  }
+}
+
+function exportReport(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  const now=new Date().toLocaleString();
+  const duration=Math.floor((Date.now()-sessionStart)/1000);
+  const mins=Math.floor(duration/60),secs=duration%60;
+
+  doc.setFillColor(7,10,15);doc.rect(0,0,210,40,'F');
+  doc.setTextColor(0,229,255);doc.setFontSize(22);doc.setFont('helvetica','bold');
+  doc.text('SPORT-TECH',14,18);
+  doc.setFontSize(10);doc.setTextColor(150,170,190);
+  doc.text('ATHLETE PERFORMANCE REPORT',14,26);
+  doc.setTextColor(100,120,140);doc.text(`Generated: ${now}`,14,34);
+
+  doc.setFillColor(13,17,23);doc.setDrawColor(26,34,51);
+  doc.roundedRect(14,48,182,55,3,3,'FD');
+  doc.setTextColor(0,229,255);doc.setFontSize(9);doc.text('SESSION SUMMARY',20,58);
+  doc.setTextColor(200,216,232);doc.setFontSize(11);doc.setFont('helvetica','bold');
+  doc.text(`${mins}:${String(secs).padStart(2,'0')}`,20,70);
+  doc.text(`${peakHR} BPM`,60,70);
+  doc.text(`${Math.round(hrSum/Math.max(hrCount,1))} BPM`,100,70);
+  doc.text(`${(spo2Sum/Math.max(hrCount,1)).toFixed(1)}%`,140,70);
+  doc.text(`${fatigueEvents}`,175,70);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(100,120,140);
+  doc.text('Duration',20,78);doc.text('Peak HR',60,78);
+  doc.text('Avg HR',100,78);doc.text('Avg SpO2',140,78);doc.text('Fatigue Events',165,78);
+
+  const fatigued=fatigueEvents>0;
+  doc.setFillColor(fatigued?255:0,fatigued?59:255,fatigued?59:136);
+  doc.roundedRect(20,86,80,8,2,2,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');
+  doc.text(fatigued?'FATIGUE DETECTED':'NO FATIGUE DETECTED',24,91.5);
+
+  doc.setTextColor(0,229,255);doc.setFontSize(9);doc.text('SESSION LOG',14,116);
+  const headers=['Time','HR','SpO2','RR','Mag','Score','Status'];
+  const colX=[14,34,60,86,110,132,158];
+  doc.setFontSize(7);doc.setTextColor(100,120,140);
+  headers.forEach((h,i)=>doc.text(h,colX[i],123));
+  doc.setDrawColor(26,34,51);doc.line(14,125,196,125);
+  sessionLog.slice(-18).forEach((r,i)=>{
+    const y=130+i*6;
+    doc.setTextColor(r.fatigue?255:200,r.fatigue?59:216,r.fatigue?59:232);
+    doc.text(String(r.t),colX[0],y);doc.text(String(r.hr),colX[1],y);
+    doc.text(String(r.spo2),colX[2],y);doc.text(String(r.rr),colX[3],y);
+    doc.text(String(r.mag),colX[4],y);doc.text(String(r.score),colX[5],y);
+    doc.text(r.fatigue?'FATIGUE':'OK',colX[6],y);
+  });
+
+  doc.setFillColor(7,10,15);doc.rect(0,285,210,15,'F');
+  doc.setTextColor(60,74,90);doc.setFontSize(7);
+  doc.text('Sport-Tech Hackathon 2026 — Intelligent Wearable Performance System',14,292);
+  doc.save(`sport_tech_report_${Date.now()}.pdf`);
+}
+
+function connect(){
+  const dot=document.getElementById('conn-dot'),label=document.getElementById('conn-label');
+  const ws=new WebSocket('ws://'+location.host);
+  ws.onopen=()=>{dot.classList.add('live');label.textContent='LIVE';};
+  ws.onmessage=e=>{try{update(JSON.parse(e.data));}catch{}};
+  ws.onclose=()=>{dot.classList.remove('live');label.textContent='RECONNECTING...';setTimeout(connect,2000);};
+  ws.onerror=()=>ws.close();
+}
+connect();
+</script>
+</body>
+</html>
