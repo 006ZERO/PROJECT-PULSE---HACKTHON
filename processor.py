@@ -42,8 +42,8 @@ async def process_and_send():
     hr_win   = deque(maxlen=HR_WIN)
     mag_win  = deque(maxlen=MAG_WIN)
     prob_win = deque(maxlen=5)
-
-    async with websockets.connect("ws://localhost:3000") as websocket:
+    
+    async with websockets.connect("ws://localhost:3000", ping_interval=None) as websocket:
         while True:
             map_file.seek(0)
             raw = map_file.read(PACKET_SIZE)
