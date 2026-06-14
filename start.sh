@@ -12,9 +12,9 @@ sleep 1
 sleep 1
 ./simulator_stress &
 sleep 1
-node server.js &
+node backend/server.js &
 sleep 2
-python3 processor.py &
+python3 backend/processor.py &
 
 echo ""
 echo "=============================="
@@ -24,4 +24,4 @@ echo "=============================="
 
 wait
 
-# replace simulator with ./rpi_sensor & if were working with real sensors
+# replace simulator with ./src/rpi_sensor & if were working with real sensors
