@@ -23,3 +23,5 @@ echo "  Open: http://localhost:3000"
 echo "=============================="
 
 wait
+
+# replace simulator with ./rpi_sensor & if were working with real sensors
