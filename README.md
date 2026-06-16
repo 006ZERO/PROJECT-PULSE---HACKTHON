@@ -6,7 +6,7 @@ PULSE is an advanced, low-latency wearable telemetry system designed to monitor 
 
 ---
 
-## ⚡ Core Engineering Features
+## Core Engineering Features
 
 * **Isolated Dual I2C Bus Pipeline:** Eliminates hardware bus contention by physically decoupling the `HW-579` accelerometer (I2C Bus 1) from the `MAX30100` optical sensor (I2C Bus 0) on the Raspberry Pi.
 * **Ultra-Low Latency UDP Transport:** Drops heavy connection protocols in favor of a raw UDP socket configuration, streaming tightly packed binary structs with a virtual **~0ms network overhead**.
@@ -15,7 +15,7 @@ PULSE is an advanced, low-latency wearable telemetry system designed to monitor 
 
 ---
 
-## 🏗️ System Architecture
+##  System Architecture
 [ HW-579 Accel ] ----> ( I2C Bus 1 ) ---
 
 |---> [ Raspberry Pi Node ] ---> ( UDP Struct Payload ) ---> [ AI Inference Engine ] ---> [ WebSockets ] ---> [ Live Node.js Grid Dashboard ]
